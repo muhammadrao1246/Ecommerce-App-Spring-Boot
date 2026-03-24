@@ -10,6 +10,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.hash.ObjectHashMapper;
 import org.springframework.data.redis.serializer.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -36,20 +37,33 @@ public class AppConfig {
 
     // defining cacheManager
     @Bean
-    CacheManager cacheManager(RedisConnectionFactory factory, ObjectMapper objectMapper){
+    CacheManager cacheManager(RedisConnectionFactory factory){
 //        return RedisCacheManager.RedisCacheManagerBuilder.fromConnectionFactory(factory).build();
-        return new ConcurrentMapCacheManager();
+            // default cache manager
+//        return new ConcurrentMapCacheManager();
 
 
-//        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-//                .entryTtl(Duration.ofSeconds(60))
-//                .disableCachingNullValues()
-//                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-//                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
-//                ;
-////
-//        return RedisCacheManager.builder(factory)
-//                .cacheDefaults(config)
-//                .build();
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofSeconds(60))
+                .disableCachingNullValues()
+                // you must set below properties otherwise JDKSerializer will be used
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+                ;
+
+        return RedisCacheManager.builder(factory)
+                .cacheDefaults(config)
+                .build();
+    }
+
+    // declaring Redis Template separately
+    @Bean
+    RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory factory){
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setValueSerializer(new JacksonJsonRedisSerializer<Object>(Object.class));
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        redisTemplate.setConnectionFactory(factory);
+        return redisTemplate;
     }
 }

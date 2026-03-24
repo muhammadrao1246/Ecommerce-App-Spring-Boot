@@ -20,7 +20,23 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     // WHEN YOU DECLARE FUNCTION WITHO YOUR OWN PROPOSED NAME OR FEATURES YOU SHOULD USE @QUERY
     // FETCH NEEDED COLUMNS YOURSELF TO BE MAPPED ON TO THE PROJECTION
     // searching with @Query JQL or native sql
-    @Query("select p.id as id, p.name as name, p.description as description, p.price as price, p.quantity as quantity, p.imageName as imageName, p.createdAt as createdAt, p.brand as brand, p.category as category  from Product p " +
+//    @Query("select p.id as id, p.name as name, p.description as description, p.price as price, p.quantity as quantity, p.imageName as imageName, p.createdAt as createdAt, p.brand as brand, p.category as category  from Product p " +
+//            "where lower(p.name) like lower(concat('%', :query, '%'))" +
+//            " or lower(p.description) like lower(concat('%', :query, '%'))")
+
+    @Query("SELECT new com.muhammadrao1246.SpringDemoApp.models.Projections.ProductInfo(" +
+            "    p.id, " +
+            "    p.name, " +
+            "    p.description, " +
+            "    p.price, " +
+            "    p.quantity, " +
+            "    p.createdAt, " +
+            "    new com.muhammadrao1246.SpringDemoApp.models.Projections.BrandInfo(b.id, b.name), " +
+            "    new com.muhammadrao1246.SpringDemoApp.models.Projections.CategoryInfo(c.id, c.name)" +
+            ") " +
+            "FROM Product p " +
+            "LEFT JOIN p.brand b " +
+            "LEFT JOIN p.category c " +
             "where lower(p.name) like lower(concat('%', :query, '%'))" +
             " or lower(p.description) like lower(concat('%', :query, '%'))")
     Page<ProductInfo> searchProducts(@Param("query") String query, Pageable pageable);
@@ -81,5 +97,19 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
 //            "where p.id = :id")
 //    Optional<ProductInfo> findProductById(UUID id);
 
-    ProductInfo findProductById(UUID id);
+    @Query("SELECT new com.muhammadrao1246.SpringDemoApp.models.Projections.ProductInfo(" +
+            "    p.id, " +
+            "    p.name, " +
+            "    p.description, " +
+            "    p.price, " +
+            "    p.quantity, " +
+            "    p.createdAt, " +
+            "    new com.muhammadrao1246.SpringDemoApp.models.Projections.BrandInfo(b.id, b.name), " +
+            "    new com.muhammadrao1246.SpringDemoApp.models.Projections.CategoryInfo(c.id, c.name)" +
+            ") " +
+            "FROM Product p " +
+            "LEFT JOIN p.brand b " +
+            "LEFT JOIN p.category c " +
+            "WHERE p.id = :id")
+    Optional<ProductInfo> findProductById(UUID id);
 }
